@@ -8,7 +8,7 @@ suite behaves the same from any working directory.
 """
 
 import re
-from collections.abc import Generator
+from collections.abc import Callable, Generator
 from contextlib import suppress
 from pathlib import Path
 from typing import Any, cast
@@ -17,6 +17,7 @@ import pytest
 from playwright.sync_api import Browser, Error, Page, Playwright, sync_playwright
 from pydantic import ValidationError
 
+from testplatform.api import ApiClient
 from testplatform.browsers import CHANNELS, PLAYWRIGHT_ENGINES, load_inventory
 from testplatform.config import load_settings
 from tests.e2e.pages.sample_app import SampleAppPage
@@ -108,3 +109,24 @@ def ui_base_url() -> str:
 @pytest.fixture
 def sample_app(page: Page, ui_base_url: str) -> SampleAppPage:
     return SampleAppPage(page, ui_base_url)
+
+
+@pytest.fixture(scope="session")
+def api_client() -> Generator[ApiClient]:
+    with ApiClient(str(load_settings().api_base_url)) as client:
+        yield client
+
+
+@pytest.fixture
+def track_item(api_client: ApiClient) -> Generator[Callable[[str], str]]:
+    """Register item names created through the UI; deleted after the test."""
+    names: list[str] = []
+
+    def track(name: str) -> str:
+        names.append(name)
+        return name
+
+    yield track
+    for item in api_client.get("/items").json():
+        if item["name"] in names:
+            api_client.request("DELETE", f"/items/{item['id']}")

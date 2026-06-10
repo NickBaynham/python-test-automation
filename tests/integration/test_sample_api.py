@@ -13,7 +13,7 @@ from testplatform.assertions import (
 ITEM_SCHEMA = {
     "type": "object",
     "properties": {
-        "id": {"type": "integer"},
+        "id": {"type": "string", "minLength": 1},
         "name": {"type": "string", "minLength": 1},
     },
     "required": ["id", "name"],

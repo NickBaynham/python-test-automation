@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.4.0 - 2026-06-10
+
+Phase 3: MongoDB database testing, the full-stack scenario, and the tester guide. Includes the post-phase code review remediation.
+
+### Added
+
+- MongoDB client layer (`testplatform.db`): `MongoTarget` with lazy connections from configuration, collection access, reachability ping, and context-manager lifecycle; new `TP_MONGO_URL` and `TP_MONGO_DATABASE` settings covered by the remote-mode guard (Phase 3, Task 1).
+- Test data seeding (`MongoSeeder`): inserts tracked documents and removes exactly what it seeded on cleanup — by id, never dropping collections — with a context-manager form that cleans up even on test failure (Phase 3, Task 2).
+- Database state assertions: document existence and absence, field values with per-field mismatch reporting, and query-scoped collection counts (Phase 3, Task 3).
+- MongoDB in the compose stack: `mongo:8` on host port 27100, healthcheck with startup backoff, ephemeral by design so every stack start is a clean database (Phase 3, Task 4).
+- Database integration suite: seeding, state assertions, and cleanup proven against live MongoDB, with a session-scoped target (fail-fast when down) and a per-test seeder fixture; tests isolate via unique run markers (Phase 3, Task 5).
+- Full-stack scenario (`tests/e2e/test_full_stack.py`): a UI action verified through the REST API and down to the MongoDB document, per browser (Phase 3, Task 6).
+- Tester guide (`docs/tester-guide.md`): introduction, step-by-step testing at each layer with executed worked examples, test design guidance, and a troubleshooting guide (Phase 3, Task 7).
+
+### Changed
+
+- Sample API now stores items in MongoDB (ObjectId string ids, CORS enabled, depends on the mongo service); sample React app persists items through the API instead of local state, and disables its form while a submission is in flight — fixing an input-loss race the e2e suite caught (Phase 3, Task 6).
+- `make security` now also audits the sample API's pinned dependency tree, closing a scanning gap for code shipped in the Docker image (Phase 3 review).
+
 ## 0.3.0 - 2026-06-10
 
 Phase 2: REST API testing. Includes the post-phase code review remediation.

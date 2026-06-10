@@ -1,4 +1,4 @@
-"""Assertion helpers for REST API responses.
+"""Assertion helpers for REST API responses and database state.
 
 All helpers raise AssertionError with messages carrying enough context to
 diagnose the failure from the test report alone.
@@ -8,6 +8,8 @@ from typing import Any
 
 import httpx
 from jsonschema import Draft202012Validator
+
+from testplatform.db import Document, MongoTarget
 
 
 def _payload(response: httpx.Response) -> Any:
@@ -69,3 +71,54 @@ def assert_matches_schema(response: httpx.Response, schema: dict[str, Any]) -> N
             for error in errors
         )
         raise AssertionError(f"schema validation failed: {details}")
+
+
+def assert_document_exists(
+    target: MongoTarget, collection: str, query: Document
+) -> Document:
+    """Assert a document matching the query exists; return it."""
+    document = target.collection(collection).find_one(query)
+    if document is None:
+        raise AssertionError(f"no document in {collection!r} matches {query!r}")
+    return document
+
+
+def assert_document_absent(
+    target: MongoTarget, collection: str, query: Document
+) -> None:
+    """Assert no document matches the query."""
+    document = target.collection(collection).find_one(query)
+    if document is not None:
+        raise AssertionError(
+            f"expected no document in {collection!r} matching {query!r}, "
+            f"found {document!r}"
+        )
+
+
+def assert_field_values(
+    target: MongoTarget, collection: str, query: Document, expected: Document
+) -> None:
+    """Assert the matching document carries every expected field value."""
+    document = assert_document_exists(target, collection, query)
+    mismatched = {
+        field: document.get(field)
+        for field, value in expected.items()
+        if document.get(field) != value
+    }
+    if mismatched:
+        raise AssertionError(
+            f"field mismatch in {collection!r} for {sorted(mismatched)}: "
+            f"expected {expected!r}, got {mismatched!r}"
+        )
+
+
+def assert_collection_count(
+    target: MongoTarget, collection: str, expected: int, query: Document | None = None
+) -> None:
+    """Assert how many documents match the query (all documents when None)."""
+    actual = target.collection(collection).count_documents(query or {})
+    if actual != expected:
+        raise AssertionError(
+            f"expected {expected} documents in {collection!r} "
+            f"matching {query or {}!r}, got {actual}"
+        )

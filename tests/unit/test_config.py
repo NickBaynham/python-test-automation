@@ -13,6 +13,8 @@ def clean_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("TP_TARGET_MODE", raising=False)
     monkeypatch.delenv("TP_UI_BASE_URL", raising=False)
     monkeypatch.delenv("TP_API_BASE_URL", raising=False)
+    monkeypatch.delenv("TP_MONGO_URL", raising=False)
+    monkeypatch.delenv("TP_MONGO_DATABASE", raising=False)
 
 
 def test_defaults_to_local_docker() -> None:
@@ -26,6 +28,7 @@ def test_reads_environment_variables(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TP_TARGET_MODE", "remote")
     monkeypatch.setenv("TP_UI_BASE_URL", "https://staging.example.com")
     monkeypatch.setenv("TP_API_BASE_URL", "https://api.staging.example.com")
+    monkeypatch.setenv("TP_MONGO_URL", "mongodb://db.staging.example.com:27017")
     settings = load_settings()
     assert settings.environment == "staging"
     assert settings.target_mode is TargetMode.REMOTE
@@ -100,8 +103,38 @@ def test_remote_mode_with_all_targets_explicit(
     monkeypatch.setenv("TP_TARGET_MODE", "remote")
     monkeypatch.setenv("TP_UI_BASE_URL", "https://app.example.com")
     monkeypatch.setenv("TP_API_BASE_URL", "https://api.example.com")
+    monkeypatch.setenv("TP_MONGO_URL", "mongodb://db.example.com:27017")
     settings = load_settings()
     assert str(settings.api_base_url) == "https://api.example.com/"
+    assert str(settings.mongo_url).rstrip("/") == "mongodb://db.example.com:27017"
+
+
+def test_mongo_defaults_to_local_database() -> None:
+    settings = load_settings()
+    assert str(settings.mongo_url).rstrip("/") == "mongodb://localhost:27100"
+    assert settings.mongo_database == "sampledb"
+
+
+def test_mongo_url_read_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TP_MONGO_URL", "mongodb://db.example.com:27017")
+    monkeypatch.setenv("TP_MONGO_DATABASE", "orders")
+    settings = load_settings()
+    assert str(settings.mongo_url).rstrip("/") == "mongodb://db.example.com:27017"
+    assert settings.mongo_database == "orders"
+
+
+def test_rejects_invalid_mongo_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TP_MONGO_URL", "http://not-a-mongo-url")
+    with pytest.raises(ValidationError):
+        load_settings()
+
+
+def test_remote_mode_requires_mongo_url(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TP_TARGET_MODE", "remote")
+    monkeypatch.setenv("TP_UI_BASE_URL", "https://app.example.com")
+    monkeypatch.setenv("TP_API_BASE_URL", "https://api.example.com")
+    with pytest.raises(ValidationError, match="TP_MONGO_URL"):
+        load_settings()
 
 
 def test_ignores_unrelated_variables(monkeypatch: pytest.MonkeyPatch) -> None:

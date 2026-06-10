@@ -34,6 +34,7 @@ run:
 
 security:
 	pdm run pip-audit
+	pdm run pip-audit -r sampleapi/requirements.txt --disable-pip --no-deps
 
 install-browsers:
 	pdm run python -m testplatform.browsers

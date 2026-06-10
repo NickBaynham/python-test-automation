@@ -33,7 +33,7 @@ make install
 | `make run` | Run the platform CLI |
 | `make security` | Audit dependencies for known vulnerabilities (pip-audit) |
 | `make install-browsers` | Detect host browsers, install available Playwright engines, write `config/browsers.json` |
-| `make docker-build` | Build the docker compose stack (sample React app and sample REST API) |
+| `make docker-build` | Build the docker compose stack (sample React app, sample REST API, MongoDB) |
 | `make docker-up` | Start the stack detached and wait until healthy |
 | `make docker-run` | Start the stack in the foreground |
 | `make docker-down` | Stop and remove the stack |
@@ -54,7 +54,7 @@ The distinction matters: `tests/unit/` verifies the platform itself and gates ev
 
 Settings load from `TP_`-prefixed environment variables (or a local `.env` file), validated by pydantic-settings. Secrets must only ever come from environment variables.
 
-The dockerized sample React app (the local e2e reference target) serves on host port 3100, and the sample REST API (the integration reference target) on host port 8100 — both chosen to avoid the crowded defaults 3000 and 8000. To override, copy [.env.example](.env.example) to `.env`: docker compose and the platform read the same file, which keeps each port and its matching `TP_*_BASE_URL` together.
+The dockerized stack provides three reference targets: the sample React app on host port 3100, the sample REST API on host port 8100, and MongoDB on host port 27100 — all shifted off the crowded defaults (3000, 8000, 27017). MongoDB runs without a volume, so every `make docker-up` starts from a clean database. To override, copy [.env.example](.env.example) to `.env`: docker compose and the platform read the same file, which keeps each port and its matching `TP_*_BASE_URL` together.
 
 Browser availability is host-specific generated output: `make install-browsers` writes `config/browsers.json` (git ignored) marking each Playwright engine (chromium, firefox, webkit) and system channel (Chrome, Edge) as available or not. Test fixtures use it to run suites across exactly the browsers the host supports.
 
@@ -64,6 +64,8 @@ Browser availability is host-specific generated output: `make install-browsers` 
 | `TP_TARGET_MODE` | `docker` | Where the application under test runs: `docker` or `remote` (values are lowercase) |
 | `TP_UI_BASE_URL` | `http://localhost:3100` | Base URL of the UI under test; must be set explicitly when `TP_TARGET_MODE` is `remote` |
 | `TP_API_BASE_URL` | `http://localhost:8100` | Base URL of the REST API under test; must be set explicitly when `TP_TARGET_MODE` is `remote` |
+| `TP_MONGO_URL` | `mongodb://localhost:27100` | MongoDB instance under test; must be set explicitly when `TP_TARGET_MODE` is `remote` |
+| `TP_MONGO_DATABASE` | `sampledb` | Database name holding the application's data |
 
 ## Page Objects
 
@@ -91,6 +93,7 @@ When running a subset of tests during development, disable the coverage gate, wh
 
 ## Documents
 
+- [Tester Guide](docs/tester-guide.md) - how to automate tests with this platform: layer-by-layer how-tos, test design, troubleshooting
 - [CHANGELOG.md](CHANGELOG.md) - change log and feature list
 - [TODO.md](TODO.md) - features not yet added or under construction
 
