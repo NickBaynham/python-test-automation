@@ -1,0 +1,15 @@
+[project]
+name = "python-test-automation"
+version = "0.1.0"
+description = "Automated testing platform for React UIs, REST APIs, and MongoDB"
+authors = [
+    { name = "Nick Baynham", email = "nickbaynham@gmail.com" },
+]
+readme = "README.md"
+license = "Apache-2.0"
+requires-python = ">=3.14"
+dependencies = []
+
+[build-system]
+requires = ["pdm-backend"]
+build-backend = "pdm.backend"

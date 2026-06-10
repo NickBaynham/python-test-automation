@@ -216,3 +216,8 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# Local agent instructions and planning (not committed)
+AGENTS.md
+CLAUDE.md
+planning/
