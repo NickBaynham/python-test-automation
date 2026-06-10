@@ -15,8 +15,8 @@ class TargetMode(StrEnum):
 
 
 # Target fields whose localhost defaults must not leak into remote runs.
-# Phase 2 (API) and Phase 3 (MongoDB) add their target fields here.
-_REMOTE_REQUIRED_FIELDS = ("ui_base_url",)
+# Phase 3 (MongoDB) adds its target field here.
+_REMOTE_REQUIRED_FIELDS = ("ui_base_url", "api_base_url")
 
 
 class Settings(BaseSettings):
@@ -36,6 +36,7 @@ class Settings(BaseSettings):
     environment: str = Field(default="local", min_length=1)
     target_mode: TargetMode = TargetMode.DOCKER
     ui_base_url: HttpUrl = HttpUrl("http://localhost:3100")
+    api_base_url: HttpUrl = HttpUrl("http://localhost:8100")
 
     @model_validator(mode="after")
     def _require_explicit_urls_for_remote(self) -> Self:

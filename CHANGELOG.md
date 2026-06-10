@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.3.0 - 2026-06-10
+
+Phase 2: REST API testing. Includes the post-phase code review remediation.
+
+### Added
+
+- REST API client layer (`testplatform.api`): `ApiClient` with base URL binding, default headers, bearer auth, timeout, and injectable transport for network-free unit testing; declarative `ApiCall` model with validated HTTP methods (Phase 2, Task 1).
+- API response assertions (`testplatform.assertions`): status codes with body context, exact and subset JSON payload checks, and JSON Schema 2020-12 validation reporting all violations (Phase 2, Task 2).
+- API target configuration: validated `TP_API_BASE_URL` setting defaulting to the local sample API; remote target mode now requires every target URL explicitly (Phase 2, Task 3).
+- Dockerized sample REST API (FastAPI items service, non-root, pinned dependencies) on host port 8100 as the integration reference target, joining the compose stack with a healthcheck (Phase 2, Task 4).
+- API integration suite (`tests/integration/`) exercising the client, declarative calls, and every assertion helper against the live sample API, with per-test data cleanup and a fail-fast reachability check; `make test-integration` target and CI step (Phase 2, Task 5).
+- `.env.example`: one documented file for local overrides, read by both docker compose and the platform, keeping port and URL pairs together (Phase 2 review).
+
+### Fixed
+
+- JSON assertion helpers fail with the response body in context when it is not JSON, instead of a raw decode traceback (Phase 2 review).
+- `assert_matches_schema` validates the schema itself first, so a malformed schema raises a clear `SchemaError` (Phase 2 review).
+- CI opts into Node 24 for JavaScript actions ahead of GitHub's June 2026 default switch.
+
 ## 0.2.0 - 2026-06-10
 
 Phase 1: React UI testing with Playwright. Includes the post-phase code review remediation.

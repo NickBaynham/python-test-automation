@@ -1,6 +1,6 @@
 # All recipes invoke tools through pdm run so they work natively on
 # macOS, Linux, and Windows (GNU Make via winget or chocolatey).
-.PHONY: install lint format test test-unit test-e2e build run security install-browsers docker-build docker-run docker-up docker-down report
+.PHONY: install lint format test test-unit test-integration test-e2e build run security install-browsers docker-build docker-run docker-up docker-down report
 
 install:
 	pdm install
@@ -19,6 +19,9 @@ test:
 
 test-unit:
 	pdm run pytest tests/unit
+
+test-integration:
+	pdm run pytest tests/integration --no-cov
 
 test-e2e:
 	pdm run pytest tests/e2e --no-cov

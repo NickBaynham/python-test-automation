@@ -12,6 +12,7 @@ def clean_environment(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.delenv("TP_ENVIRONMENT", raising=False)
     monkeypatch.delenv("TP_TARGET_MODE", raising=False)
     monkeypatch.delenv("TP_UI_BASE_URL", raising=False)
+    monkeypatch.delenv("TP_API_BASE_URL", raising=False)
 
 
 def test_defaults_to_local_docker() -> None:
@@ -24,6 +25,7 @@ def test_reads_environment_variables(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TP_ENVIRONMENT", "staging")
     monkeypatch.setenv("TP_TARGET_MODE", "remote")
     monkeypatch.setenv("TP_UI_BASE_URL", "https://staging.example.com")
+    monkeypatch.setenv("TP_API_BASE_URL", "https://api.staging.example.com")
     settings = load_settings()
     assert settings.environment == "staging"
     assert settings.target_mode is TargetMode.REMOTE
@@ -72,14 +74,34 @@ def test_remote_mode_requires_explicit_ui_base_url(
         load_settings()
 
 
-def test_remote_mode_with_explicit_ui_base_url(
+def test_api_base_url_defaults_to_local_sample_api() -> None:
+    settings = load_settings()
+    assert str(settings.api_base_url) == "http://localhost:8100/"
+
+
+def test_api_base_url_read_from_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TP_API_BASE_URL", "https://api.staging.example.com")
+    settings = load_settings()
+    assert str(settings.api_base_url) == "https://api.staging.example.com/"
+
+
+def test_remote_mode_requires_every_target_url(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     monkeypatch.setenv("TP_TARGET_MODE", "remote")
     monkeypatch.setenv("TP_UI_BASE_URL", "https://app.example.com")
+    with pytest.raises(ValidationError, match="TP_API_BASE_URL"):
+        load_settings()
+
+
+def test_remote_mode_with_all_targets_explicit(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setenv("TP_TARGET_MODE", "remote")
+    monkeypatch.setenv("TP_UI_BASE_URL", "https://app.example.com")
+    monkeypatch.setenv("TP_API_BASE_URL", "https://api.example.com")
     settings = load_settings()
-    assert settings.target_mode is TargetMode.REMOTE
-    assert str(settings.ui_base_url) == "https://app.example.com/"
+    assert str(settings.api_base_url) == "https://api.example.com/"
 
 
 def test_ignores_unrelated_variables(monkeypatch: pytest.MonkeyPatch) -> None:

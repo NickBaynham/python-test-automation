@@ -27,12 +27,13 @@ make install
 | `make format` | Apply formatting and safe lint fixes |
 | `make test` | Run all tests with coverage (90% minimum); e2e needs the stack up |
 | `make test-unit` | Run only the platform unit tests |
-| `make test-e2e` | Run only the e2e suite (start the app first: `make docker-up`) |
+| `make test-integration` | Run only the API integration suite (start the stack first: `make docker-up`) |
+| `make test-e2e` | Run only the e2e suite (start the stack first: `make docker-up`) |
 | `make build` | Build the sdist and wheel |
 | `make run` | Run the platform CLI |
 | `make security` | Audit dependencies for known vulnerabilities (pip-audit) |
 | `make install-browsers` | Detect host browsers, install available Playwright engines, write `config/browsers.json` |
-| `make docker-build` | Build the docker compose stack (sample React app) |
+| `make docker-build` | Build the docker compose stack (sample React app and sample REST API) |
 | `make docker-up` | Start the stack detached and wait until healthy |
 | `make docker-run` | Start the stack in the foreground |
 | `make docker-down` | Stop and remove the stack |
@@ -47,13 +48,13 @@ tests/integration/   Application-targeted integration tests (from Phase 1)
 tests/e2e/           Application-targeted end-to-end tests (from Phase 1)
 ```
 
-The distinction matters: `tests/unit/` verifies the platform itself and gates every change; `tests/integration/` and `tests/e2e/` exercise target applications. E2e tests run headless against every browser marked available in `config/browsers.json` — Playwright engines and system channels (Chrome, Edge) alike — and failures leave a screenshot and Playwright trace under `test-artifacts/`.
+The distinction matters: `tests/unit/` verifies the platform itself and gates every change; `tests/integration/` (REST API) and `tests/e2e/` (browser) exercise target applications and fail fast with guidance when the stack is not running. E2e tests run headless against every browser marked available in `config/browsers.json` — Playwright engines and system channels (Chrome, Edge) alike — and failures leave a screenshot and Playwright trace under `test-artifacts/`.
 
 ## Configuration
 
 Settings load from `TP_`-prefixed environment variables (or a local `.env` file), validated by pydantic-settings. Secrets must only ever come from environment variables.
 
-The dockerized sample React app (the local e2e reference target) serves on host port 3100, chosen to avoid the crowded 3000. Override with `SAMPLEAPP_PORT` when starting the stack, and set `TP_UI_BASE_URL` to match.
+The dockerized sample React app (the local e2e reference target) serves on host port 3100, and the sample REST API (the integration reference target) on host port 8100 — both chosen to avoid the crowded defaults 3000 and 8000. To override, copy [.env.example](.env.example) to `.env`: docker compose and the platform read the same file, which keeps each port and its matching `TP_*_BASE_URL` together.
 
 Browser availability is host-specific generated output: `make install-browsers` writes `config/browsers.json` (git ignored) marking each Playwright engine (chromium, firefox, webkit) and system channel (Chrome, Edge) as available or not. Test fixtures use it to run suites across exactly the browsers the host supports.
 
@@ -62,6 +63,7 @@ Browser availability is host-specific generated output: `make install-browsers` 
 | `TP_ENVIRONMENT` | `local` | Named environment for the run |
 | `TP_TARGET_MODE` | `docker` | Where the application under test runs: `docker` or `remote` (values are lowercase) |
 | `TP_UI_BASE_URL` | `http://localhost:3100` | Base URL of the UI under test; must be set explicitly when `TP_TARGET_MODE` is `remote` |
+| `TP_API_BASE_URL` | `http://localhost:8100` | Base URL of the REST API under test; must be set explicitly when `TP_TARGET_MODE` is `remote` |
 
 ## Page Objects
 
@@ -71,10 +73,10 @@ To add a page object, subclass `BasePage` under `tests/e2e/pages/`, implement `p
 
 ## Testing a Remote Application
 
-Point the e2e suite at a remote hosted UI by setting the target mode and an explicit base URL (required in remote mode):
+Point the suites at remote hosted targets by setting the target mode and explicit base URLs — remote mode requires every target URL explicitly:
 
 ```
-TP_TARGET_MODE=remote TP_UI_BASE_URL=https://app.example.com make test-e2e
+TP_TARGET_MODE=remote TP_UI_BASE_URL=https://app.example.com TP_API_BASE_URL=https://api.example.com make test-e2e test-integration
 ```
 
 ## Continuous Integration
