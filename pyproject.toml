@@ -51,7 +51,7 @@ files = ["src", "tests"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov=testplatform --cov-report=term-missing"
+addopts = "--cov=testplatform --cov-branch --cov-report=term-missing"
 
 [tool.coverage.report]
 fail_under = 90

@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Unit tests are now isolated from a developer's local .env file (tests run from a temporary directory).
+- Empty TP_ENVIRONMENT values are rejected at load time instead of being silently accepted.
+
+### Changed
+
+- Version is single-sourced from package metadata; pyproject.toml is the only declaration.
+- Coverage now measures branches as well as lines (gate unchanged at 90%).
+- README: corrected Windows GNU Make guidance, documented lowercase TP_TARGET_MODE values and the --no-cov flag for subset test runs.
+
 ## 0.1.0 - 2026-06-10
 
 Phase 0: basic Python project.

@@ -2,6 +2,7 @@
 
 from enum import StrEnum
 
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -26,7 +27,7 @@ class Settings(BaseSettings):
         frozen=True,
     )
 
-    environment: str = "local"
+    environment: str = Field(default="local", min_length=1)
     target_mode: TargetMode = TargetMode.DOCKER
 
 

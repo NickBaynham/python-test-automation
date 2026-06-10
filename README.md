@@ -9,7 +9,7 @@ A Python based software test automation platform for testing React UIs, REST API
 - GNU Make
 - Docker Desktop (from Phase 1 onward, for dockerized targets)
 
-On Windows, install GNU Make with `winget install GnuWin32.Make` or `choco install make`. All Make recipes are cross-platform: they invoke tools through PDM and use no POSIX-only shell constructs.
+On Windows, install GNU Make with `choco install make` (use a source providing GNU Make 4.x; the GnuWin32 build is outdated). All Make recipes are cross-platform: they invoke tools through PDM and use no POSIX-only shell constructs.
 
 ## Setup
 
@@ -47,11 +47,13 @@ Settings load from `TP_`-prefixed environment variables (or a local `.env` file)
 | Variable | Default | Purpose |
 |---|---|---|
 | `TP_ENVIRONMENT` | `local` | Named environment for the run |
-| `TP_TARGET_MODE` | `docker` | Where the application under test runs: `docker` or `remote` |
+| `TP_TARGET_MODE` | `docker` | Where the application under test runs: `docker` or `remote` (values are lowercase) |
 
 ## Development Workflow
 
-Work is incremental and test-first: write a failing test, implement to green, then `make lint`, `make test`, and `make security` must all pass before a change is done. Coverage below 90% fails the build.
+Work is incremental and test-first: write a failing test, implement to green, then `make lint`, `make test`, and `make security` must all pass before a change is done. Coverage (line and branch) below 90% fails the build.
+
+When running a subset of tests during development, disable the coverage gate, which is calibrated for the full suite: `pdm run pytest tests/unit/test_config.py --no-cov`.
 
 ## Documents
 

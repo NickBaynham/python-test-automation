@@ -217,6 +217,9 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+# Generated, host-specific browser availability (make install-browsers)
+config/browsers.json
+
 # Local agent instructions and planning (not committed)
 AGENTS.md
 CLAUDE.md

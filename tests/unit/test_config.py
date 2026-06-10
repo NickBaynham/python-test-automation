@@ -1,16 +1,19 @@
 """Unit tests for the environment configuration module."""
 
+from pathlib import Path
+
 import pytest
 from pydantic import ValidationError
 
-from testplatform.config import Settings, TargetMode, load_settings
+from testplatform.config import TargetMode, load_settings
 
 
 @pytest.fixture(autouse=True)
-def clean_environment(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Remove platform variables so each test controls its own environment."""
+def clean_environment(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    """Isolate each test from platform variables and any local .env file."""
     monkeypatch.delenv("TP_ENVIRONMENT", raising=False)
     monkeypatch.delenv("TP_TARGET_MODE", raising=False)
+    monkeypatch.chdir(tmp_path)
 
 
 def test_defaults_to_local_docker() -> None:
@@ -39,7 +42,14 @@ def test_settings_are_immutable() -> None:
         settings.environment = "prod"
 
 
+def test_rejects_empty_environment(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("TP_ENVIRONMENT", "")
+    with pytest.raises(ValidationError):
+        load_settings()
+
+
 def test_ignores_unrelated_variables(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setenv("TP_FUTURE_OPTION", "anything")
     settings = load_settings()
-    assert isinstance(settings, Settings)
+    assert settings.environment == "local"
+    assert settings.target_mode is TargetMode.DOCKER
