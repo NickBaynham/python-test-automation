@@ -220,6 +220,17 @@ __marimo__/
 # Generated, host-specific browser availability (make install-browsers)
 config/browsers.json
 
+# Sample application build artifacts
+sampleapp/node_modules/
+sampleapp/dist/
+
+# Allure reporting output
+allure-results/
+allure-report/
+
+# E2e failure artifacts (screenshots, traces)
+test-artifacts/
+
 # Local agent instructions and planning (not committed)
 AGENTS.md
 CLAUDE.md

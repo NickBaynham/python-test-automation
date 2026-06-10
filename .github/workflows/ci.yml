@@ -1,0 +1,116 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  quality:
+    name: Quality (ubuntu-latest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up PDM
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: "3.14"
+          cache: true
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Lint, format check, type check
+        run: make lint
+
+      - name: Unit tests with coverage
+        run: make test-unit
+
+      - name: Security audit
+        run: make security
+
+      - name: Upload unit Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-unit
+          path: allure-results
+
+  quality-windows:
+    # Only OS-dependent checks run here: static analysis results are
+    # identical across platforms. Windows runners lack GNU Make, so the
+    # commands mirror the Make recipes directly.
+    name: Quality (windows-latest)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up PDM
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: "3.14"
+          cache: true
+
+      - name: Install dependencies
+        run: pdm install
+
+      - name: Unit tests with coverage
+        run: pdm run pytest tests/unit
+
+      - name: Security audit
+        run: pdm run pip-audit
+
+  e2e:
+    name: E2E (ubuntu-latest)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up PDM
+        uses: pdm-project/setup-pdm@v4
+        with:
+          python-version: "3.14"
+          cache: true
+
+      - name: Install dependencies
+        run: make install
+
+      - name: Build and start the sample app
+        run: |
+          make docker-build
+          make docker-up
+
+      - name: Read Playwright version
+        id: playwright
+        run: echo "version=$(pdm run python -c "from importlib.metadata import version; print(version('playwright'))")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.playwright.outputs.version }}
+
+      - name: Install Playwright system dependencies
+        run: pdm run playwright install-deps
+
+      - name: Detect and install browsers
+        run: make install-browsers
+
+      - name: E2E tests
+        run: make test-e2e
+
+      - name: Upload e2e Allure results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results-e2e
+          path: allure-results
+
+      - name: Upload failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-failure-artifacts
+          path: test-artifacts
+          if-no-files-found: ignore
